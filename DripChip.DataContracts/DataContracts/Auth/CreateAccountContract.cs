@@ -1,24 +1,22 @@
 ﻿using DripChip.DataContracts.Attributes;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace DripChip.DataContracts.DataContracts.Auth
 {
     public class CreateAccountContract
     {
         [NotSpace]
-        [FromBody]
         public string FirstName { get; set; }
 
         [NotSpace]
-        [FromBody]
         public string LastName { get; set; }
 
         [NotSpace]
-        [FromBody]
+        [EmailAddress]
         public string Email { get; set; }
 
         [NotSpace]
-        [FromBody]
         public string Password { get; set; }
     }
 }

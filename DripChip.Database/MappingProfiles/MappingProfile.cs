@@ -2,6 +2,7 @@
 using DripChip.Database.Models;
 using DripChip.DataContracts.DataContracts.Animal;
 using DripChip.DataContracts.DataContracts.AnimalType;
+using DripChip.DataContracts.DataContracts.AnimalVisitedLocation;
 using DripChip.DataContracts.DataContracts.Auth;
 using DripChip.DataContracts.DataContracts.Location;
 using DripChip.DataContracts.ViewModels;
@@ -27,6 +28,10 @@ namespace DripChip.Database.MappingProfiles
             CreateMap<CreateAnimalContract, Animal>();
             CreateMap<UpdateAnimalContract, Animal>();
             CreateMap<Animal, AnimalViewModel>();
+
+            CreateMap<CreateAnimalVisitedLocationContract, AnimalVisitedLocation>();
+            CreateMap<UpdateAnimalVisitedLocationContract, AnimalVisitedLocation>();
+            CreateMap<AnimalVisitedLocation, AnimalVisitedLocationViewModel>();
         }
     }
 }

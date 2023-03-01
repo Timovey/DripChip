@@ -1,5 +1,6 @@
 ﻿using DripChip.DataContracts.Attributes;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace DripChip.DataContracts.DataContracts.Auth
@@ -21,6 +22,7 @@ namespace DripChip.DataContracts.DataContracts.Auth
 
         [FromBody]
         [NotSpace]
+        [EmailAddress]
         public string Email { get; set; }
 
         [FromBody]

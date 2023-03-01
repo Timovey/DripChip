@@ -9,6 +9,7 @@ namespace DripChip.Database
         internal DbSet<Location> Locations { get; set; }
         internal DbSet<AnimalType> AnimalTypes { get; set; }
         internal DbSet<Animal> Animals { get; set; }
+        internal DbSet<AnimalVisitedLocation> AnimalVisitedLocations { get; set; }
 
         public DripChipContext(DbContextOptions<DripChipContext> options)
         : base(options)

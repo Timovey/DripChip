@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using DripChip.Database.Extensions;
 using DripChip.Database.Interfaces;
 using DripChip.Database.Models;
 using DripChip.DataContracts.DataContracts.Auth;
 using DripChip.DataContracts.ViewModels;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace DripChip.Database.Implements
@@ -22,11 +24,12 @@ namespace DripChip.Database.Implements
 
         public async Task<AccountViewModel> CreateAccountAsync(CreateAccountContract contract)
         {
+
             var account  = _mapper.Map<Account>(contract);
             await _context.Accounts.AddAsync(account);
             await _context.SaveChangesAsync();
 
-            return _mapper.Map<AccountViewModel>(contract);
+            return _mapper.Map<AccountViewModel>(account);
         }
 
         public async Task<AccountViewModel> UpdateAccountAsync(UpdateAccountContract contract)
@@ -54,12 +57,9 @@ namespace DripChip.Database.Implements
         public async Task<IList<AccountViewModel>> GetFilteredAccountAsync(GetFilteredAccountContract contract)
         {
             var accounts = await _context.Accounts
-                .Where(el => contract.FirstName != null 
-                    && el.FirstName.ToLower().Contains(contract.FirstName.ToLower()))
-                .Where(el => contract.LastName != null
-                    && el.LastName.ToLower().Contains(contract.LastName.ToLower()))
-                .Where(el => contract.Email != null
-                    && el.Email.ToLower().Contains(contract.Email.ToLower()))
+                .WhereIf(contract.FirstName != null, el => el.FirstName.ToLower().Contains(contract.FirstName.ToLower()))
+                .WhereIf(contract.LastName != null, el => el.LastName.ToLower().Contains(contract.LastName.ToLower()))
+                .WhereIf(contract.Email != null, el => el.Email.ToLower().Contains(contract.Email.ToLower()))
                 .Skip(contract.From)
                 .Take(contract.Size)
                 .OrderBy(el => el.Id).ToListAsync();

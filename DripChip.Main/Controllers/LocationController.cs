@@ -1,6 +1,6 @@
 ﻿using DripChip.Database.Interfaces;
 using DripChip.DataContracts.DataContracts.Location;
-using DripChip.Main.Filters;
+using DripChip.Main.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,12 +27,13 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpGet("{pointId}")]
+        [NotStrict]
         public async Task<IResult> GetLocationAsync([FromRoute] int pointId)
         {
-            //if (pointId == null || pointId <= 0)
-            //{
-            //    return Results.BadRequest();
-            //}
+            if (pointId == null || pointId <= 0)
+            {
+                return Results.BadRequest();
+            }
             try
             {
                 var result = await _storage.GetLocationAsync(pointId);

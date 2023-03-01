@@ -1,12 +1,13 @@
 ﻿using DripChip.Database.Interfaces;
 using DripChip.DataContracts.DataContracts.Auth;
-using DripChip.Main.Filters;
+using DripChip.Main.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DripChip.Main.Controllers
 {
     [ApiController]
+    [Authorize]
     public class AccountController : ControllerBase
     {
         private IAccountStorage _storage;
@@ -16,7 +17,8 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpPost("/registration")]
-        public async Task<IResult> RegistrationAsync(CreateAccountContract contract)
+        [AllowAnonymous]
+        public async Task<IResult> RegistrationAsync([FromBody] CreateAccountContract contract)
         {
             if(HttpContext.User.Identity.IsAuthenticated)
             {
@@ -37,13 +39,13 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpGet("/accounts/{accountId}")]
-        [Authorize]
+        [NotStrict]
         public async Task<IResult> GetAccountAsync([FromRoute] int accountId)
         {
-            //if (accountId == null || accountId <= 0)
-            //{
-            //    return Results.BadRequest();
-            //}
+            if (accountId == null || accountId <= 0)
+            {
+                return Results.BadRequest();
+            }
             try
             {
                 var result = await _storage.GetAccountAsync(accountId);
@@ -60,12 +62,9 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpGet("/accounts/search")]
-        [Authorize]
-        public async Task<IResult> GetFilteredAccountAsync(GetFilteredAccountContract contract)
+        [NotStrict]
+        public async Task<IResult> GetFilteredAccountAsync([FromQuery] GetFilteredAccountContract contract)
         {
-            //if(contract.From < 0 || contract.Size <= 0) {
-            //    return Results.BadRequest();
-            //}
             try
             {
                 var result = await _storage.GetFilteredAccountAsync(contract);
@@ -78,14 +77,9 @@ namespace DripChip.Main.Controllers
             }
         }
 
-        [HttpPut("/account/{accountId}")]
-        [Authorize]
+        [HttpPut("/accounts/{accountId}")]
         public async Task<IResult> UpdateAccountAsync(UpdateAccountContract contract)
         {
-            //if (contract.Id <= 0)
-            //{
-            //    return Results.BadRequest();
-            //}
             //!!!!!!!!!!!!!!!!!!!!!!!!
             //проверка на пробелы и обновление не своего аккаунта
             if (await _storage.IsAccountExist(contract.Email))
@@ -108,19 +102,18 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpDelete("/accounts/{accountId}")]
-        [Authorize]
         public async Task<IResult> DeleteAccountAsync([FromRoute] int accountId)
         {
             //ПРОВЕРКА НА ЖИВОТНОЕ
             //И не свой аккаунт
-            //if (accountId == null || accountId <= 0)
-            //{
-            //    return Results.BadRequest();
-            //}
+            if (accountId == null || accountId <= 0)
+            {
+                return Results.BadRequest();
+            }
             try
             {
                 var result = await _storage.DeleteAccountAsync(accountId);
-                if (result == null)
+                if (result == null || !result)
                 {
                     return Results.Forbid();
                 }

@@ -1,6 +1,6 @@
 ﻿using DripChip.Database.Interfaces;
 using DripChip.DataContracts.DataContracts.AnimalType;
-using DripChip.Main.Filters;
+using DripChip.Main.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,12 +18,13 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpGet("{typeId}")]
+        [NotStrict]
         public async Task<IResult> GetAnimalTypeAsync([FromRoute] long typeId)
         {
-            //if (typeId == null || typeId <= 0)
-            //{
-            //    return Results.BadRequest();
-            //}
+            if (typeId == null || typeId <= 0)
+            {
+                return Results.BadRequest();
+            }
             try
             {
                 var result = await _storage.GetAnimalTypeAsync(typeId);
@@ -61,11 +62,6 @@ namespace DripChip.Main.Controllers
         [HttpPut("{typeId}")]
         public async Task<IResult> UpdateAnimalTypeAsync(UpdateAnimalTypeContract contract)
         {                       
-            //ПРОБЕЛЫ
-            //if (contract.Id <= 0)
-            //{
-            //    return Results.BadRequest();
-            //}
             try
             {
                 var result = await _storage.UpdateAnimalTypeAsync(contract);
@@ -85,10 +81,10 @@ namespace DripChip.Main.Controllers
         public async Task<IResult> DeleteAnimalTypeAsync([FromRoute] long typeId)
         {
             //ТОЧКА СВЯЗАНА С ЖИВОТНЫМ - проверка
-            //if (typeId == null || typeId <= 0)
-            //{
-            //    return Results.BadRequest();
-            //}
+            if (typeId == null || typeId <= 0)
+            {
+                return Results.BadRequest();
+            }
             try
             {
                 var result = await _storage.DeleteAnimalTypeAsync(typeId);

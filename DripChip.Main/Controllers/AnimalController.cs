@@ -1,8 +1,9 @@
 ﻿using DripChip.Database.Interfaces;
+using DripChip.Database.Models;
 using DripChip.DataContracts.DataContracts.Animal;
-using DripChip.DataContracts.DataContracts.Auth;
+using DripChip.DataContracts.DataContracts.AnimalVisitedLocation;
 using DripChip.DataContracts.Enums;
-using DripChip.Main.Filters;
+using DripChip.Main.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -40,9 +41,33 @@ namespace DripChip.Main.Controllers
             return true;
         }
 
+        #region Animal
+
+        [HttpGet("search")]
+        [NotStrict]
+        public async Task<IResult> GetFilteredAccountAsync([FromQuery] GetFilteredAnimalContract? contract)
+        {
+            //ФОРМАТ ДАТЫ
+            try
+            {
+                var result = await _animalStorage.GetFilteredAnimalAsync(contract);
+
+                return Results.Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return Results.StatusCode(500);
+            }
+        }
+
         [HttpGet("{animalId}")]
+        [NotStrict]
         public async Task<IResult> GetAnimalAsync([FromRoute] int animalId)
         {
+            if (animalId == null || animalId <= 0)
+            {
+                return Results.BadRequest();
+            }
             try
             {
                 var result = await _animalStorage.GetAnimalAsync(animalId);
@@ -58,23 +83,7 @@ namespace DripChip.Main.Controllers
             }
         }
 
-        [HttpGet("/search")]
-        public async Task<IResult> GetFilteredAccountAsync(GetFilteredAnimalContract contract)
-        {
-            //ФОРМАТ ДАТЫ
-            try
-            {
-                var result = await _animalStorage.GetFilteredAnimalAsync(contract);
-
-                return Results.Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return Results.StatusCode(500);
-            }
-        }
-
-        [HttpPost]
+        [HttpPost("")]
         public async Task<IResult> CreateAnimalAsync(CreateAnimalContract contract)
         {
             if (!IsAnimalTypesValid(contract.AnimalTypes))
@@ -154,6 +163,10 @@ namespace DripChip.Main.Controllers
         [HttpDelete("{animalId}")]
         public async Task<IResult> DeleteAnimalAsync([FromRoute] int animalId)
         {
+            if (animalId == null || animalId <= 0)
+            {
+                return Results.BadRequest();
+            }
             try
             {
                 var result = await _animalStorage.DeleteAnimalAsync(animalId);
@@ -168,6 +181,10 @@ namespace DripChip.Main.Controllers
                 return Results.StatusCode(500);
             }
         }
+
+        #endregion
+
+        #region Animal Type Action
 
         [HttpPost("{animalId}/types/{typeId}")]
         public async Task<IResult> AddTypeToAnimalAsync(AddTypeToAnimalContract contract)
@@ -257,5 +274,172 @@ namespace DripChip.Main.Controllers
                 return Results.StatusCode(500);
             }
         }
+        #endregion
+
+        #region Visited Points
+
+        [HttpGet("{animalId}/locations")]
+        [NotStrict]
+        public async Task<IResult> GetFilteredAmimalVisitedLocationAsync(
+           [FromQuery] GetFilteredAnimalVisitedLocationContract contract)
+        {
+            //ФОРМАТ ДАТЫ
+            try
+            {
+                var result = await _animalStorage.GetFilteredAmimalVisitedLocationAsync(contract);
+
+                if (result == null)
+                {
+                    return Results.NotFound();
+                }
+                return Results.Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return Results.StatusCode(500);
+            }
+        }
+
+        [HttpPost("{animalId}/locations/{pointId}")]
+        public async Task<IResult> AddTypeToAnimalAsync(CreateAnimalVisitedLocationContract contract)
+        {
+            var animal = await _animalStorage.GetAnimalAsync(contract.AnimalId);
+            if(animal == null)
+            {
+                return Results.NotFound();
+            }
+            var point = await _locationStorage.GetLocationAsync(contract.LocationPointId);
+            if (point == null)
+            {
+                return Results.NotFound();
+            }
+            if(animal.ChippingLocationId == contract.LocationPointId)
+            {
+                return Results.BadRequest();
+            }
+            if(animal.VisitedLocations.Last() == contract.LocationPointId)
+            {
+                return Results.BadRequest();
+            }
+            try
+            {
+                var result = await _animalStorage.AddAnimalVisitedLocationAsync(contract);
+                if (result == null)
+                {
+                    return Results.NotFound();
+                }
+                return Results.Created(HttpContext.Request.Path, result);
+            }
+            catch (Exception ex)
+            {
+                return Results.StatusCode(500);
+            }
+        }
+
+        [HttpPut("{animalId}/locations")]
+        public async Task<IResult> UpdateAnimalVisitedLocationAsync(
+            UpdateAnimalVisitedLocationContract contract)
+        {
+            var animal = await _animalStorage.GetAnimalAsync(contract.AnimalId);
+            if (animal == null)
+            {
+                return Results.NotFound();
+            }
+            if (await _locationStorage.GetLocationAsync(contract.LocationPointId) == null)
+            {
+                return Results.NotFound();
+            }
+            var animalVisitedLocation = await _animalStorage.GetAnimalVisitedLocationAsync(contract.Id);
+            if (animalVisitedLocation == null) 
+            {
+                return Results.NotFound();
+            }
+            if(!animal.VisitedLocations.Contains(contract.Id)) 
+            { 
+                return Results.NotFound();
+            }
+
+
+            if (animal.ChippingLocationId == contract.LocationPointId)
+            {
+                return Results.BadRequest();
+            }
+            if (animal.VisitedLocations.FirstOrDefault() == contract.Id && 
+                contract.LocationPointId == animal.ChippingLocationId)
+            {
+                return Results.BadRequest();
+            }
+            if(animalVisitedLocation.LocationPointId == contract.LocationPointId)
+            {
+                return Results.BadRequest();
+            }
+            for(int i = 0; i < animal.VisitedLocations.Count(); i++)
+            {
+                if (animal.VisitedLocations[i] == contract.Id)
+                {
+                    if(i - 1 >= 0 && (await _animalStorage
+                        .GetAnimalVisitedLocationAsync(animal.VisitedLocations[i - 1])).LocationPointId 
+                        == contract.LocationPointId)
+                    {
+                        return Results.BadRequest();
+                    }
+
+                    if (i + 1 < animal.VisitedLocations.Count() && (await _animalStorage
+                        .GetAnimalVisitedLocationAsync(animal.VisitedLocations[i + 1])).LocationPointId
+                        == contract.LocationPointId)
+                    {
+                        return Results.BadRequest();
+                    }
+                    break;
+                }
+            }
+            try
+            {
+                var result = await _animalStorage.UpdateAnimalVisitedLocationAsync(contract);
+                if (result == null)
+                {
+                    return Results.NotFound();
+                }
+                return Results.Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return Results.StatusCode(500);
+            }
+        }
+
+        [HttpDelete("{animalId}/locations/{visitedPointId}")]
+        public async Task<IResult> DeleteAnimalVisitedLocationAsync(DeleteAnimalVisitedLocationContract contract)
+        {
+            var animal = await _animalStorage.GetAnimalAsync(contract.AnimalId);
+            if (animal == null)
+            {
+                return Results.NotFound();
+            }
+           
+            var animalVisitedLocation = await _animalStorage.GetAnimalVisitedLocationAsync(contract.VisitedPointId);
+            if (animalVisitedLocation == null)
+            {
+                return Results.NotFound();
+            }
+            if (!animal.VisitedLocations.Contains(contract.VisitedPointId))
+            {
+                return Results.NotFound();
+            }
+            try
+            {
+                var result = await _animalStorage.DeleteAnimalVisitedLocationAsync(contract);
+                if (result == null)
+                {
+                    return Results.NotFound();
+                }
+                return Results.Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return Results.StatusCode(500);
+            }
+        }
+        #endregion
     }
 }

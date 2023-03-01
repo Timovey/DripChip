@@ -1,4 +1,3 @@
-using DripChip.Core.BusinessLogic;
 using DripChip.Database;
 using DripChip.Database.Implements;
 using DripChip.Database.Interfaces;
@@ -6,6 +5,7 @@ using DripChip.Database.MappingProfiles;
 using DripChip.Main.Handlers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -46,7 +46,7 @@ builder.Services.AddSwaggerGen(swagger =>
 
 //Auth
 builder.Services.AddAuthentication("Basic")
-                .AddScheme<AuthenticationSchemeOptions, 
+                .AddScheme<AuthenticationSchemeOptions,
                     BasicAuthenticationHandler>("Basic", null);
 
 builder.Services.AddControllers();
@@ -56,7 +56,7 @@ builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
 
 
 //!_! ------------------ Cors
-//builder.Services.AddCors(x => x.AddDefaultPolicy(xx => { xx.AllowAnyOrigin(); xx.AllowAnyHeader(); }));
+builder.Services.AddCors(x => x.AddDefaultPolicy(xx => { xx.AllowAnyOrigin(); xx.AllowAnyHeader(); }));
 
 //!_! ------------------ Life Cycles
 builder.Services.AddScoped<IAccountStorage, AccountStorage>();
@@ -66,7 +66,7 @@ builder.Services.AddScoped<IAnimalTypeStorage, AnimalTypeStorage>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || 1 == 1)
 {
     app.UseSwagger();
     app.UseSwaggerUI();
@@ -74,11 +74,23 @@ if (app.Environment.IsDevelopment())
 }
 
 
-app.UseHttpsRedirection();
+app.UseCors();
+//app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<DripChipContext>();
+    if (context.Database.GetPendingMigrations().Any())
+    {
+        context.Database.Migrate();
+    }
+}
 
 app.Run();

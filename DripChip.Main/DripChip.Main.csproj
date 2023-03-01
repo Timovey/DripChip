@@ -23,7 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DripChip.Core\DripChip.Core.csproj" />
     <ProjectReference Include="..\DripChip.Database\DripChip.Database.csproj" />
     <ProjectReference Include="..\DripChip.DataContracts\DripChip.DataContracts.csproj" />
   </ItemGroup>

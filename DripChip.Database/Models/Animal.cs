@@ -37,6 +37,9 @@ namespace DripChip.Database.Models
         // Идентификатор точки локации животных
         public long ChippingLocationId { get; set; }
 
+        // Массив идентификаторов объектов с информацией о посещенных точках локаций
+        public long[] VisitedLocations { get; set; }
+
         // Дата и время смерти животного в формате ISO-8601
         // (устанавливается автоматически при смене lifeStatus на “DEAD”).
         // Равняется null, пока lifeStatus = “ALIVE”.

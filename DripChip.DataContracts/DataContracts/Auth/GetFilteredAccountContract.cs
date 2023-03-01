@@ -1,26 +1,17 @@
-﻿using DripChip.DataContracts.Attributes;
+﻿using DripChip.DataContracts.DataContracts.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DripChip.DataContracts.DataContracts.Auth
 {
-    public class GetFilteredAccountContract
+    public class GetFilteredAccountContract : CommonFilterContract
     {
-        [FromQuery]
-        public string FirstName { get; set; }
+        [FromQuery(Name = "firstName")]
+        public string? FirstName { get; set; }
 
-        [FromQuery]
-        public string LastName { get; set; }
+        [FromQuery(Name = "lastName")]
+        public string? LastName { get; set; }
 
-        [FromQuery]
-        public string Email { get; set; }
-
-        [FromQuery]
-        [Positive]
-        public int From { get; set; }
-
-        [FromQuery]
-        [GreaterThanZero]
-        public int Size { get; set; } = 10;
-
+        [FromQuery(Name = "email")]
+        public string? Email { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 using DripChip.Database.Interfaces;
 using DripChip.Database.Models;
 using DripChip.DataContracts.DataContracts.Animal;
+using DripChip.DataContracts.DataContracts.AnimalVisitedLocation;
 using DripChip.DataContracts.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -165,6 +166,108 @@ namespace DripChip.Database.Implements
             }
 
             return null;
+        }
+
+        public async Task<IList<AnimalVisitedLocationViewModel>> GetFilteredAmimalVisitedLocationAsync(
+            GetFilteredAnimalVisitedLocationContract contract)
+        {
+            var animal = await _context.Animals.Where(el => 
+                el.Id == contract.AnimalId).FirstOrDefaultAsync();
+
+            if (animal == null) {
+                return null;
+            }
+
+            var animalVisitedLocation = await _context.AnimalVisitedLocations
+                .Where(el => animal.VisitedLocations.Contains(el.Id))
+                .ToListAsync();
+
+            var result = new List<AnimalVisitedLocationViewModel>();
+            foreach(var loc in animalVisitedLocation)
+            {
+                result.Add(_mapper.Map<AnimalVisitedLocationViewModel>(loc));
+            }
+            return result;
+        }
+
+        public async Task<AnimalVisitedLocationViewModel> GetAnimalVisitedLocationAsync(long id)
+        {
+            var animalVisitedLocation = await _context.AnimalVisitedLocations
+              .Where(el => el.Id == id).FirstOrDefaultAsync();
+
+            if (animalVisitedLocation == null)
+            {
+                return null;
+            }
+
+            return _mapper.Map<AnimalVisitedLocationViewModel>(animalVisitedLocation);
+        }
+
+        public async Task<AnimalVisitedLocationViewModel> AddAnimalVisitedLocationAsync(
+            CreateAnimalVisitedLocationContract contract)
+        {
+            var animalVisitedLocation = _mapper.Map<AnimalVisitedLocation>(contract);
+                await _context.AnimalVisitedLocations.AddAsync(animalVisitedLocation);
+
+            await _context.SaveChangesAsync();
+
+            var animal = await _context.Animals.Where(el =>
+                el.Id == contract.AnimalId).FirstOrDefaultAsync();
+            if(animal == null)
+            {
+                return null;
+            }
+            animal.VisitedLocations.Append(animalVisitedLocation.Id);
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<AnimalVisitedLocationViewModel>(animalVisitedLocation);
+        }
+
+        public async Task<AnimalVisitedLocationViewModel> UpdateAnimalVisitedLocationAsync(
+            UpdateAnimalVisitedLocationContract contract)
+        {
+            var animalVisitedLocation = await _context.AnimalVisitedLocations
+                .Where(el => el.Id == contract.LocationPointId).FirstOrDefaultAsync();
+
+            if(animalVisitedLocation == null)
+            {
+                return null;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<AnimalVisitedLocationViewModel>(animalVisitedLocation);
+        }
+
+        public async Task<bool> DeleteAnimalVisitedLocationAsync(
+           DeleteAnimalVisitedLocationContract contract)
+        {
+            var animal = await _context.Animals.Where(el => 
+                el.Id == contract.AnimalId).FirstOrDefaultAsync();
+
+            if(animal == null)
+            {
+                return false;
+            }
+            if(animal.VisitedLocations.Contains(contract.VisitedPointId))
+            {
+                animal.VisitedLocations.ToList().Remove(contract.VisitedPointId);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                return false;
+            }
+            var animalVisitedLocation = await _context.AnimalVisitedLocations
+                .Where(el => el.Id == contract.VisitedPointId).FirstOrDefaultAsync();
+
+            if (animalVisitedLocation == null)
+            {
+                return false;
+            }
+            _context.AnimalVisitedLocations.Remove(animalVisitedLocation);
+            return true;
+
         }
     }
 }

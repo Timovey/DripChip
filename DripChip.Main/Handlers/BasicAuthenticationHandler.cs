@@ -5,36 +5,55 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Text;
-using DripChip.Core.BusinessLogic;
 using DripChip.DataContracts.DataContracts.Auth;
+using DripChip.Database.Implements;
+using DripChip.Database.Interfaces;
+using System.Text.RegularExpressions;
+using DripChip.Main.Attributes;
+using DripChip.Database.Models;
 
 namespace DripChip.Main.Handlers
 {
     public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
-        private readonly AccountLogic _logic;
+        private readonly IAccountStorage _storage;
 
         private const string AUTH_HEADER = "Authorization";
+        string EmailRegex = @"(\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*)";
         public BasicAuthenticationHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
             ISystemClock clock,
-            AccountLogic logic)
+            IAccountStorage storage)
             : base(options, logger, encoder, clock)
         {
-            _logic = logic;
+            _storage = storage;
         }
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            // skip authentication if endpoint has [AllowAnonymous] attribute
+            // для необязательной авторизации
             var endpoint = Context.GetEndpoint();
-            if (endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() != null)
-                return AuthenticateResult.NoResult();
+            bool isAnonimus = endpoint?.Metadata?.GetMetadata<NotStrictAttribute>() != null;
 
+            if (isAnonimus && !Request.Headers.ContainsKey(AUTH_HEADER))
+            {
+                var claims = new[] {
+                    new Claim(ClaimTypes.NameIdentifier, "0"),
+                    new Claim(ClaimTypes.Email, "email@emaail.com"),
+                };
+
+                var identity = new ClaimsIdentity(claims, Scheme.Name);
+                var principal = new ClaimsPrincipal(identity);
+                var ticket = new AuthenticationTicket(principal, Scheme.Name);
+                return AuthenticateResult.Success(ticket);
+            }
             if (!Request.Headers.ContainsKey(AUTH_HEADER))
+            {
                 return AuthenticateResult.Fail("Missing Authorization Header");
+            }
+            
             try
             {
                 var authHeader = AuthenticationHeaderValue.Parse(Request.Headers[AUTH_HEADER]);
@@ -45,7 +64,11 @@ namespace DripChip.Main.Handlers
                 if (email == null || password == null)
                     return AuthenticateResult.Fail("Invalid Email or Password");
 
-                var account = await _logic.Authenticate(new LoginContract
+                if(!Regex.IsMatch(email, EmailRegex))
+                {
+                    return AuthenticateResult.Fail("Invalid Email");
+                }
+                var account = await _storage.AuthenticateAsync(new LoginContract
                 {
                     Email= email, 
                     Password = password

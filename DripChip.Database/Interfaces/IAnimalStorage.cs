@@ -1,7 +1,6 @@
-﻿using DripChip.Database.Models;
-using DripChip.DataContracts.DataContracts.Animal;
+﻿using DripChip.DataContracts.DataContracts.Animal;
+using DripChip.DataContracts.DataContracts.AnimalVisitedLocation;
 using DripChip.DataContracts.ViewModels;
-using Microsoft.EntityFrameworkCore;
 
 namespace DripChip.Database.Interfaces
 {
@@ -26,5 +25,19 @@ namespace DripChip.Database.Interfaces
         public Task<AnimalViewModel> ChangeTypeInAnimalAsync(ChangeTypeInAnimalContract contract);
 
         public Task<AnimalViewModel> RemoveTypeInAnimalAsync(RemoveTypeInAnimalContract contract);
+
+        public Task<IList<AnimalVisitedLocationViewModel>> GetFilteredAmimalVisitedLocationAsync(
+           GetFilteredAnimalVisitedLocationContract contract);
+
+        public Task<AnimalVisitedLocationViewModel> GetAnimalVisitedLocationAsync(long id);
+
+        public Task<AnimalVisitedLocationViewModel> AddAnimalVisitedLocationAsync(
+            CreateAnimalVisitedLocationContract contract);
+
+        public Task<AnimalVisitedLocationViewModel> UpdateAnimalVisitedLocationAsync(
+            UpdateAnimalVisitedLocationContract contract);
+
+        public Task<bool> DeleteAnimalVisitedLocationAsync(
+           DeleteAnimalVisitedLocationContract contract);
     }
 }
