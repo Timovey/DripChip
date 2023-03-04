@@ -6,16 +6,14 @@ namespace DripChip.DataContracts.DataContracts.AnimalVisitedLocation
 {
     public class CreateAnimalVisitedLocationContract
     {
-        public DateTime DateTimeOfVisitLocationPoint { get; } = DateTime.Now;
+        public DateTime DateTimeOfVisitLocationPoint { get; } = DateTime.UtcNow;
 
-        [FromRoute]
         [GreaterThanZero]
-        [JsonPropertyName("pointId")]
+        [ModelBinder(Name ="pointId")]
         public long LocationPointId { get; set; }
 
-        [FromRoute]
         [GreaterThanZero]
-        [JsonPropertyName("animalId")]
+        [ModelBinder(Name = "animalId")]
         public long AnimalId { get; set; }
     }
 }

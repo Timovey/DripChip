@@ -5,7 +5,7 @@ namespace DripChip.Database.Interfaces
 {
     public interface IAccountStorage
     {
-        public Task<AccountViewModel> CreateAccountAsync(CreateAccountContract contract);
+        public Task<AccountViewModel> CreateAccountAsync(AccountBody contract);
 
         public Task<AccountViewModel> UpdateAccountAsync(UpdateAccountContract contract);
 
@@ -15,9 +15,11 @@ namespace DripChip.Database.Interfaces
 
         public Task<bool> DeleteAccountAsync(int accountId);
 
-        public Task<bool> IsAccountExist(string email);
+        public Task<bool> IsAccountExist(string email, int? id);
 
         public Task<AccountViewModel> AuthenticateAsync(LoginContract contract);
+
+        public Task<bool> IsAnimalLinkToAccount(int accountId);
 
     }
 }

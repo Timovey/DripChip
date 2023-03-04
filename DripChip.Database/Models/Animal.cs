@@ -8,13 +8,13 @@ namespace DripChip.Database.Models
         public long Id { get; set; }
 
         // Массив идентификаторов типов животного
-        public long[] AnimalTypes { get; set; }
+        public List<long> AnimalTypes { get; set; }
 
         // Масса животного, кг
         public float Weight { get; set; }
 
         // Длина животного, м
-        public float Lenght { get; set; }
+        public float Length { get; set; }
 
         // Высота животного, м
         public float Height { get; set; }
@@ -38,7 +38,7 @@ namespace DripChip.Database.Models
         public long ChippingLocationId { get; set; }
 
         // Массив идентификаторов объектов с информацией о посещенных точках локаций
-        public long[] VisitedLocations { get; set; }
+        public List<long> VisitedLocations { get; set; }
 
         // Дата и время смерти животного в формате ISO-8601
         // (устанавливается автоматически при смене lifeStatus на “DEAD”).

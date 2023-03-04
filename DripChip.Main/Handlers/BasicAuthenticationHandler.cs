@@ -1,16 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Text;
 using DripChip.DataContracts.DataContracts.Auth;
-using DripChip.Database.Implements;
 using DripChip.Database.Interfaces;
 using System.Text.RegularExpressions;
 using DripChip.Main.Attributes;
-using DripChip.Database.Models;
 
 namespace DripChip.Main.Handlers
 {

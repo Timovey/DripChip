@@ -1,8 +1,11 @@
 ﻿using DripChip.Database.Interfaces;
+using DripChip.DataContracts.DataContracts.Animal;
 using DripChip.DataContracts.DataContracts.Auth;
 using DripChip.Main.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics.Contracts;
+using System.Security.Claims;
 
 namespace DripChip.Main.Controllers
 {
@@ -10,27 +13,38 @@ namespace DripChip.Main.Controllers
     [Authorize]
     public class AccountController : ControllerBase
     {
-        private IAccountStorage _storage;
+        private IAccountStorage _accountStorage;
         public AccountController(IAccountStorage storage)
         {
-            _storage = storage;
+            _accountStorage = storage;
+        }
+
+        private bool IsUserAccount(ClaimsPrincipal user, int id)
+        {
+            var accountId = user.FindFirstValue(ClaimTypes.NameIdentifier.ToString());
+
+            if (id.ToString() == accountId)
+            {
+                return true;
+            }
+            return false;
         }
 
         [HttpPost("/registration")]
         [AllowAnonymous]
-        public async Task<IResult> RegistrationAsync([FromBody] CreateAccountContract contract)
+        public async Task<IResult> RegistrationAsync([FromBody] AccountBody contract)
         {
             if(HttpContext.User.Identity.IsAuthenticated)
             {
                 return Results.Forbid();
             }
-            if (await _storage.IsAccountExist(contract.Email))
+            if (await _accountStorage.IsAccountExist(contract.Email, null))
             {
                 return Results.Conflict(error: "Аккаунт с таким email уже существует");
             }
             try
             {
-                return Results.Created(HttpContext.Request.Path ,await _storage.CreateAccountAsync(contract));
+                return Results.Created(HttpContext.Request.Path ,await _accountStorage.CreateAccountAsync(contract));
             }
             catch (Exception ex)
             {
@@ -48,7 +62,7 @@ namespace DripChip.Main.Controllers
             }
             try
             {
-                var result = await _storage.GetAccountAsync(accountId);
+                var result = await _accountStorage.GetAccountAsync(accountId);
                 if (result == null)
                 {
                     return Results.NotFound();
@@ -67,7 +81,7 @@ namespace DripChip.Main.Controllers
         {
             try
             {
-                var result = await _storage.GetFilteredAccountAsync(contract);
+                var result = await _accountStorage.GetFilteredAccountAsync(contract);
 
                 return Results.Ok(result);
             }
@@ -80,15 +94,17 @@ namespace DripChip.Main.Controllers
         [HttpPut("/accounts/{accountId}")]
         public async Task<IResult> UpdateAccountAsync(UpdateAccountContract contract)
         {
-            //!!!!!!!!!!!!!!!!!!!!!!!!
-            //проверка на пробелы и обновление не своего аккаунта
-            if (await _storage.IsAccountExist(contract.Email))
+            if(!IsUserAccount(HttpContext.User, contract.AccountId))
+            {
+                return Results.Forbid();
+            }
+            if (await _accountStorage.IsAccountExist(contract.Body.Email, contract.AccountId))
             {
                 return Results.Conflict(error: "Аккаунт с таким email уже существует");
             }
             try
             {
-                var result = await _storage.UpdateAccountAsync(contract);
+                var result = await _accountStorage.UpdateAccountAsync(contract);
                 if (result == null)
                 {
                     return Results.Forbid();
@@ -104,15 +120,21 @@ namespace DripChip.Main.Controllers
         [HttpDelete("/accounts/{accountId}")]
         public async Task<IResult> DeleteAccountAsync([FromRoute] int accountId)
         {
-            //ПРОВЕРКА НА ЖИВОТНОЕ
-            //И не свой аккаунт
             if (accountId == null || accountId <= 0)
+            {
+                return Results.BadRequest();
+            }
+            if (!IsUserAccount(HttpContext.User, accountId))
+            {
+                return Results.Forbid();
+            }
+            if(await _accountStorage.IsAnimalLinkToAccount(accountId))
             {
                 return Results.BadRequest();
             }
             try
             {
-                var result = await _storage.DeleteAccountAsync(accountId);
+                var result = await _accountStorage.DeleteAccountAsync(accountId);
                 if (result == null || !result)
                 {
                     return Results.Forbid();

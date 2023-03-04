@@ -4,12 +4,30 @@ using DripChip.Database.Interfaces;
 using DripChip.Database.MappingProfiles;
 using DripChip.Main.Handlers;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.OpenApi.Models;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.DependencyInjection;
+using System.Text.RegularExpressions;
+using System.ComponentModel;
+using DripChip.DataContracts.JsonHelpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// combine models in controller
+builder.Services.Configure<ApiBehaviorOptions>(options => 
+    options.SuppressInferBindingSourcesForParameters = true);
+
+//culture for dates
+//builder.Services.Configure<RequestLocalizationOptions>(options =>
+//{
+//    options.DefaultRequestCulture = new RequestCulture(CultureInfo.InvariantCulture);
+//    options.SupportedCultures = new List<CultureInfo> { CultureInfo.InvariantCulture };
+//});
 
 builder.Services.AddDbContext<DripChipContext>(options =>
     options.UseNpgsql(
@@ -49,7 +67,15 @@ builder.Services.AddAuthentication("Basic")
                 .AddScheme<AuthenticationSchemeOptions,
                     BasicAuthenticationHandler>("Basic", null);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.AllowInputFormatterExceptionMessages = true;
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+    options.JsonSerializerOptions.Converters.Add(new DateTimeJsonConverter());
+    options.JsonSerializerOptions.Converters.Add(new NullDateTimeJsonConverter());
+    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+});
 
 //!_! ------------------ Mapping Profiles
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
@@ -66,13 +92,20 @@ builder.Services.AddScoped<IAnimalTypeStorage, AnimalTypeStorage>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment() || 1 == 1)
+if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseDeveloperExceptionPage();
 }
 
+var supportedCultures = new[] { new CultureInfo("ru-RU") };
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("ru-RU"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
 
 app.UseCors();
 //app.UseHttpsRedirection();

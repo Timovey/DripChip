@@ -1,6 +1,6 @@
 ﻿namespace DripChip.DataContracts.Enums
 {
-    public enum GenderType
+    public enum GenderType : byte
     {
         OTHER = 0,
         MALE = 1,

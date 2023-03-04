@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DripChip.Database.Implements
 {
-    public class AnimalTypeStorage  : IAnimalTypeStorage
+    public class AnimalTypeStorage : IAnimalTypeStorage
     {
         private readonly DripChipContext _context;
         private readonly IMapper _mapper;
@@ -20,24 +20,24 @@ namespace DripChip.Database.Implements
             _mapper = mapper;
         }
 
-        public async Task<AnimalTypeViewModel> CreateAnimalTypeAsync(CreateAnimalTypeContract contract)
+        public async Task<AnimalTypeViewModel> CreateAnimalTypeAsync(AnimalTypeBody contract)
         {
             var animalType = _mapper.Map<AnimalType>(contract);
             await _context.AnimalTypes.AddAsync(animalType);
             await _context.SaveChangesAsync();
 
-            return _mapper.Map<AnimalTypeViewModel>(contract);
+            return _mapper.Map<AnimalTypeViewModel>(animalType);
         }
 
         public async Task<AnimalTypeViewModel> UpdateAnimalTypeAsync(UpdateAnimalTypeContract contract)
         {
             var animalType = await _context.AnimalTypes.Where(el =>
-                el.Id == contract.Id).FirstOrDefaultAsync();
+                el.Id == contract.TypeId).FirstOrDefaultAsync();
             if (animalType == null)
             {
                 return null;
             }
-            _mapper.Map(contract, animalType);
+            _mapper.Map(contract.Body, animalType);
 
             await _context.SaveChangesAsync();
 
@@ -70,6 +70,17 @@ namespace DripChip.Database.Implements
               el.Type == type).FirstOrDefaultAsync();
 
             return animalType != null;
+        }
+
+        public async Task<bool> IsAnimalHasType(long typeId)
+        {
+            var animals = await _context.Animals.Where(el => 
+                el.AnimalTypes.Contains(typeId)).ToListAsync();
+            if(animals != null && animals.Count > 0)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

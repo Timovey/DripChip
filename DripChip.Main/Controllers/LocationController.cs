@@ -1,4 +1,6 @@
 ﻿using DripChip.Database.Interfaces;
+using DripChip.Database.Models;
+using DripChip.DataContracts.DataContracts.Animal;
 using DripChip.DataContracts.DataContracts.Location;
 using DripChip.Main.Attributes;
 using Microsoft.AspNetCore.Authorization;
@@ -6,20 +8,20 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DripChip.Main.Controllers
 {
-    [Route("[controller]s")]
+    [Route("locations")]
     [ApiController]
     [Authorize]
     public class LocationController : ControllerBase
     {
-        private ILocationStorage _storage;
-        public LocationController(ILocationStorage storage)
+        private ILocationStorage _locationStorage;
+        public LocationController(ILocationStorage locationStorage)
         {
-            _storage = storage;
+            _locationStorage = locationStorage;
         }
-        private bool IsPointValid(double lalitude, double longitude)
+        private bool IsPointValid(LocationBody Body)
         {
-            if (lalitude < -90 || lalitude > 90 ||
-            longitude < -180 || longitude > 180)
+            if (Body.Latitude < -90 || Body.Latitude > 90 ||
+            Body.Longitude < -180 || Body.Longitude > 180)
             {
                 return false;
             }
@@ -36,7 +38,7 @@ namespace DripChip.Main.Controllers
             }
             try
             {
-                var result = await _storage.GetLocationAsync(pointId);
+                var result = await _locationStorage.GetLocationAsync(pointId);
                 if (result == null)
                 {
                     return Results.NotFound();
@@ -50,19 +52,19 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpPost]
-        public async Task<IResult> CreateLocationAsync(CreateLocationContract contract)
+        public async Task<IResult> CreateLocationAsync([FromBody] LocationBody contract)
         {
-            if (!IsPointValid(contract.Latitude, contract.Longitude))
+            if (!IsPointValid(contract))
             {
                 return Results.BadRequest();
             }
-            if(await _storage.IsPointExist(contract.Latitude, contract.Longitude))
+            if(await _locationStorage.IsPointExist(contract))
             {
                 return Results.Conflict();
             }
             try
             {
-                var result = await _storage.CreateLocationAsync(contract);
+                var result = await _locationStorage.CreateLocationAsync(contract);
                 return Results.Created(HttpContext.Request.Path , result);
             }
             catch (Exception ex)
@@ -74,17 +76,17 @@ namespace DripChip.Main.Controllers
         [HttpPut("{pointId}")]
         public async Task<IResult> UpdateLocationAsync(UpdateLocationContract contract)
         {
-            if (!IsPointValid(contract.Latitude, contract.Longitude) || contract.Id <= 0)
+            if (!IsPointValid(contract.Body) || contract.PointId <= 0)
             {
                 return Results.BadRequest();
             }
-            if (await _storage.IsPointExist(contract.Latitude, contract.Longitude))
+            if (await _locationStorage.IsPointExist(contract.Body))
             {
                 return Results.Conflict();
             }
             try
             {
-                var result = await _storage.UpdateLocationAsync(contract);
+                var result = await _locationStorage.UpdateLocationAsync(contract);
                 if (result == null)
                 {
                     return Results.NotFound();
@@ -98,17 +100,25 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpDelete("{pointId}")]
-        public async Task<IResult> DeleteLocationAsync([FromRoute] int pointId)
+        public async Task<IResult> DeleteLocationAsync([FromRoute] long pointId)
         {
-            //ТОЧКА СВЯЗАНА С ЖИВОТНЫМ
-            //if (pointId == null || pointId <= 0)
-            //{
-            //    return Results.BadRequest();
-            //}
+           
+            if (pointId == null || pointId <= 0)
+            {
+                return Results.BadRequest();
+            }
+            if (await _locationStorage.GetLocationAsync(pointId) == null)
+            {
+                return Results.NotFound();
+            }
+            if (await _locationStorage.IsAnimalHasPoint(pointId))
+            {
+                return Results.BadRequest();
+            }
             try
             {
-                var result = await _storage.DeleteLocationAsync(pointId);
-                if (result == null)
+                var result = await _locationStorage.DeleteLocationAsync(pointId);
+                if (result == null || !result)
                 {
                     return Results.NotFound();
                 }

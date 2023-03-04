@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using DripChip.Database.Extensions;
 using DripChip.Database.Interfaces;
 using DripChip.Database.Models;
 using DripChip.DataContracts.DataContracts.Animal;
 using DripChip.DataContracts.DataContracts.AnimalVisitedLocation;
+using DripChip.DataContracts.Enums;
 using DripChip.DataContracts.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,19 +29,23 @@ namespace DripChip.Database.Implements
             await _context.Animals.AddAsync(animal);
             await _context.SaveChangesAsync();
 
-            return _mapper.Map<AnimalViewModel>(contract);
+            return _mapper.Map<AnimalViewModel>(animal);
         }
 
         public async Task<AnimalViewModel> UpdateAnimalAsync(UpdateAnimalContract contract)
         {
             var animal = await _context.Animals.Where(el =>
-                el.Id == contract.Id).FirstOrDefaultAsync();
+                el.Id == contract.AnimalId).FirstOrDefaultAsync();
             if (animal == null)
             {
                 return null;
             }
-            _mapper.Map(contract, animal);
+            _mapper.Map(contract.Body, animal);
 
+            if(contract.Body.LifeStatus == LifeStatusType.DEAD)
+            {
+                animal.DeathDateTime = DateTime.UtcNow;
+            }
             await _context.SaveChangesAsync();
 
             return _mapper.Map<AnimalViewModel>(animal);
@@ -55,26 +61,27 @@ namespace DripChip.Database.Implements
         public async Task<IList<AnimalViewModel>> GetFilteredAnimalAsync(GetFilteredAnimalContract contract)
         {
             var animals = await _context.Animals
-                .Where(el => contract.StartDateTime != null
-                    && el.ChippingDateTime >= contract.StartDateTime)
-                .Where(el => contract.EndDateTime != null
-                    && el.ChippingDateTime <= contract.EndDateTime)
-                .Where(el => contract.ChipperId != null
-                    && el.ChipperId == contract.ChipperId)
-                .Where(el => contract.ChippingLocationId != null
-                    && el.ChippingLocationId == contract.ChippingLocationId)
-                .Where(el => contract.LifeStatus.HasValue
-                    && el.LifeStatus == (byte)contract.LifeStatus.Value)
-                .Where(el => contract.Gender.HasValue
-                    && el.Gender == (byte)contract.Gender.Value)
+                .WhereIf(contract.StartDateTime != null, el => 
+                    el.ChippingDateTime >= contract.StartDateTime)
+                .WhereIf(contract.EndDateTime != null, el => 
+                    el.ChippingDateTime <= contract.EndDateTime)
+                .WhereIf(contract.ChipperId != null, el =>
+                    el.ChipperId == contract.ChipperId)
+                .WhereIf(contract.ChippingLocationId != null, el => 
+                    el.ChippingLocationId == contract.ChippingLocationId)
+                .WhereIf(contract.LifeStatus.HasValue, el =>
+                    el.LifeStatus == (byte)contract.LifeStatus.Value)
+                .WhereIf(contract.Gender.HasValue, el =>
+                    el.Gender == (byte)contract.Gender.Value)
+                .OrderBy(el => el.Id)
                 .Skip(contract.From)
                 .Take(contract.Size)
-                .OrderBy(el => el.Id).ToListAsync();
+                .ToListAsync();
 
             var result = new List<AnimalViewModel>();
             foreach (var animal in animals)
             {
-                _mapper.Map<AnimalViewModel>(animal);
+                result.Add(_mapper.Map<AnimalViewModel>(animal));
             }
             return result;
         }
@@ -107,10 +114,10 @@ namespace DripChip.Database.Implements
             {
                 return null;
             }
-            animal.AnimalTypes.Append(contract.TypeId);
+            animal.AnimalTypes.Add(contract.TypeId);
             await _context.SaveChangesAsync();
 
-            return _mapper.Map<AnimalViewModel>(contract);
+            return _mapper.Map<AnimalViewModel>(animal);
         }
 
         public async Task<bool> IsAnimalTypeExistInAnimal(long animalId, long typeId)
@@ -128,21 +135,21 @@ namespace DripChip.Database.Implements
         {
             var animal = await _context.Animals.Where(el =>
                 el.Id == contract.AnimalId).FirstOrDefaultAsync();
-            if (animal.AnimalTypes.Contains(contract.NewTypeId))
+            if (animal.AnimalTypes.Contains(contract.Body.NewTypeId))
             {
                 return null;
             }
-            
-            
-            for(long i = 0; i < animal.AnimalTypes.Count(); i++)
-            {
-                if (animal.AnimalTypes[i] == contract.OldTypeId)
-                {
-                    animal.AnimalTypes[i] = contract.NewTypeId;
-                    await _context.SaveChangesAsync();
-                    break;
-                }
+
+            int index = animal.AnimalTypes.FindIndex(el => el == contract.Body.OldTypeId);
+
+            if (index != -1) {
+                animal.AnimalTypes[index] = contract.Body.NewTypeId;
             }
+            else
+            {
+                return null;
+            }
+
             return _mapper.Map<AnimalViewModel>(animal);
         }
 
@@ -159,7 +166,7 @@ namespace DripChip.Database.Implements
                 return null;
             }
 
-            if(animal.AnimalTypes.ToList().Remove(contract.TypeId))
+            if(animal.AnimalTypes.Remove(contract.TypeId))
             {
                 await _context.SaveChangesAsync();
                 return _mapper.Map<AnimalViewModel>(animal);
@@ -217,7 +224,7 @@ namespace DripChip.Database.Implements
             {
                 return null;
             }
-            animal.VisitedLocations.Append(animalVisitedLocation.Id);
+            animal.VisitedLocations.Add(animalVisitedLocation.Id);
             await _context.SaveChangesAsync();
 
             return _mapper.Map<AnimalVisitedLocationViewModel>(animalVisitedLocation);
@@ -251,7 +258,7 @@ namespace DripChip.Database.Implements
             }
             if(animal.VisitedLocations.Contains(contract.VisitedPointId))
             {
-                animal.VisitedLocations.ToList().Remove(contract.VisitedPointId);
+                animal.VisitedLocations.Remove(contract.VisitedPointId);
                 await _context.SaveChangesAsync();
             }
             else
@@ -267,7 +274,42 @@ namespace DripChip.Database.Implements
             }
             _context.AnimalVisitedLocations.Remove(animalVisitedLocation);
             return true;
+        }
 
+        public async Task<bool> IsLastPointEqualsNewPoint(long animalId, long pointId)
+        {
+            var animal = await _context.Animals.Where(el => el.Id == animalId)
+                .FirstOrDefaultAsync();
+            var lastVisitedLocationId = animal.VisitedLocations.LastOrDefault();
+            if (lastVisitedLocationId == null)
+            {
+                return false;
+            }
+            var lastVisitedLocation = await _context.AnimalVisitedLocations.Where(el =>
+                el.Id == lastVisitedLocationId).FirstOrDefaultAsync();
+            if (lastVisitedLocation == null)
+            {
+                return false;
+            }
+            return lastVisitedLocation.LocationPointId == pointId;
+        }
+
+        public async Task<bool> IsFirstPointEqualsChipPoint(long animalId, long pointId)
+        {
+            var animal = await _context.Animals.Where(el => el.Id == animalId)
+                .FirstOrDefaultAsync();
+            var firstVisitedLocationId = animal.VisitedLocations.FirstOrDefault();
+            if (firstVisitedLocationId == null)
+            {
+                return false;
+            }
+            var firstVisitedLocation = await _context.AnimalVisitedLocations.Where(el =>
+                el.Id == firstVisitedLocationId).FirstOrDefaultAsync();
+            if (firstVisitedLocation == null)
+            {
+                return false;
+            }
+            return firstVisitedLocation.LocationPointId == pointId;
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using DripChip.Database.Interfaces;
-using DripChip.Database.Models;
 using DripChip.DataContracts.DataContracts.Animal;
 using DripChip.DataContracts.DataContracts.AnimalVisitedLocation;
 using DripChip.DataContracts.Enums;
@@ -28,7 +27,7 @@ namespace DripChip.Main.Controllers
             _accountStorage = accountStorage;
             _locationStorage = locationStorage;
         }
-        private bool IsAnimalTypesValid(long[] animalTypes)
+        private bool IsAnimalTypesValid(List<long> animalTypes)
         {
             if (animalTypes == null || animalTypes.Count() <= 0)
             {
@@ -36,7 +35,7 @@ namespace DripChip.Main.Controllers
             }
             foreach (var type in animalTypes)
             {
-                if (type == 0)  return false;
+                if (type <= 0)  return false;
             }
             return true;
         }
@@ -84,7 +83,7 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpPost("")]
-        public async Task<IResult> CreateAnimalAsync(CreateAnimalContract contract)
+        public async Task<IResult> CreateAnimalAsync([FromBody] CreateAnimalContract contract)
         {
             if (!IsAnimalTypesValid(contract.AnimalTypes))
             {
@@ -124,23 +123,28 @@ namespace DripChip.Main.Controllers
         [HttpPut("{animalId}")]
         public async Task<IResult> UpdateAnimalAsync(UpdateAnimalContract contract)
         {
-            var animal = await _animalStorage.GetAnimalAsync(contract.Id);
+            var animal = await _animalStorage.GetAnimalAsync(contract.AnimalId);
             if (animal == null)
             {
                 return Results.NotFound();
             }
-            if (await _accountStorage.GetAccountAsync(contract.ChipperId) == null)
+            if (await _accountStorage.GetAccountAsync(contract.Body.ChipperId) == null)
             {
                 return Results.NotFound();
             }
-            if (await _locationStorage.GetLocationAsync(contract.ChippingLocationId) == null)
+            if (await _locationStorage.GetLocationAsync(contract.Body.ChippingLocationId) == null)
             {
                 return Results.NotFound();
             }
-            if(animal.LifeStatus == LifeStatusType.DEAD 
-                && contract.LifeStatus== LifeStatusType.ALIVE)
+            if(animal.LifeStatus == LifeStatusType.DEAD
+                && contract.Body.LifeStatus == LifeStatusType.ALIVE)
             {
                  return Results.BadRequest();
+            }
+            if (await _animalStorage.IsFirstPointEqualsChipPoint(contract.AnimalId,
+                contract.Body.ChippingLocationId))
+            {
+                return Results.BadRequest();
             }
             try
             {
@@ -167,10 +171,19 @@ namespace DripChip.Main.Controllers
             {
                 return Results.BadRequest();
             }
+            var animal = await _animalStorage.GetAnimalAsync(animalId);
+            if (animal == null)
+            {
+                return Results.NotFound();
+            }
+            if(animal.VisitedLocations.Count() > 0)
+            {
+                return Results.BadRequest();
+            }
             try
             {
                 var result = await _animalStorage.DeleteAnimalAsync(animalId);
-                if (result == null)
+                if (result == null || !result)
                 {
                     return Results.NotFound();
                 }
@@ -187,7 +200,7 @@ namespace DripChip.Main.Controllers
         #region Animal Type Action
 
         [HttpPost("{animalId}/types/{typeId}")]
-        public async Task<IResult> AddTypeToAnimalAsync(AddTypeToAnimalContract contract)
+        public async Task<IResult> AddTypeToAnimalAsync([FromRoute] AddTypeToAnimalContract contract)
         {
             if (await _animalStorage.GetAnimalAsync(contract.AnimalId) == null)
             {
@@ -212,21 +225,21 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpPut("{animalId}/types")]
-        public async Task<IResult> ChangeTypeInAnimalAsync(ChangeTypeInAnimalContract contract)
+        public async Task<IResult> ChangeTypeInAnimalAsync([FromRoute] ChangeTypeInAnimalContract contract)
         {
             if (await _animalStorage.GetAnimalAsync(contract.AnimalId) == null)
             {
                 return Results.NotFound();
             }
-            if (await _animalTypeStorage.GetAnimalTypeAsync(contract.OldTypeId) == null)
+            if (await _animalTypeStorage.GetAnimalTypeAsync(contract.Body.OldTypeId) == null)
             {
                 return Results.NotFound();
             }
-            if (await _animalTypeStorage.GetAnimalTypeAsync(contract.NewTypeId) == null)
+            if (await _animalTypeStorage.GetAnimalTypeAsync(contract.Body.NewTypeId) == null)
             {
                 return Results.NotFound();
             }
-            if(await _animalStorage.IsAnimalTypeExistInAnimal(contract.AnimalId, contract.OldTypeId))
+            if(!await _animalStorage.IsAnimalTypeExistInAnimal(contract.AnimalId, contract.Body.OldTypeId))
             {
                 return Results.NotFound();
             }
@@ -246,9 +259,10 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpDelete("{animalId}/types/{typeId}")]
-        public async Task<IResult> RemoveTypeInAnimalAsync(RemoveTypeInAnimalContract contract)
+        public async Task<IResult> RemoveTypeInAnimalAsync([FromRoute] RemoveTypeInAnimalContract contract)
         {
-            if (await _animalStorage.GetAnimalAsync(contract.AnimalId) == null)
+            var animal = await _animalStorage.GetAnimalAsync(contract.AnimalId);
+            if (animal == null)
             {
                 return Results.NotFound();
             }
@@ -256,9 +270,13 @@ namespace DripChip.Main.Controllers
             {
                 return Results.NotFound();
             }
-            if (await _animalStorage.IsAnimalTypeExistInAnimal(contract.AnimalId, contract.TypeId))
+            if (!await _animalStorage.IsAnimalTypeExistInAnimal(contract.AnimalId, contract.TypeId))
             {
                 return Results.NotFound();
+            }
+            if(animal.AnimalTypes.Count == 1)
+            {
+                return Results.BadRequest();
             }
             try
             {
@@ -281,7 +299,7 @@ namespace DripChip.Main.Controllers
         [HttpGet("{animalId}/locations")]
         [NotStrict]
         public async Task<IResult> GetFilteredAmimalVisitedLocationAsync(
-           [FromQuery] GetFilteredAnimalVisitedLocationContract contract)
+           GetFilteredAnimalVisitedLocationContract contract)
         {
             //ФОРМАТ ДАТЫ
             try
@@ -301,12 +319,16 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpPost("{animalId}/locations/{pointId}")]
-        public async Task<IResult> AddTypeToAnimalAsync(CreateAnimalVisitedLocationContract contract)
+        public async Task<IResult> AddVisitedLocationToAnimalAsync([FromRoute] CreateAnimalVisitedLocationContract contract)
         {
             var animal = await _animalStorage.GetAnimalAsync(contract.AnimalId);
             if(animal == null)
             {
                 return Results.NotFound();
+            }
+            if(animal.LifeStatus == LifeStatusType.DEAD)
+            {
+                return Results.BadRequest();
             }
             var point = await _locationStorage.GetLocationAsync(contract.LocationPointId);
             if (point == null)
@@ -317,7 +339,7 @@ namespace DripChip.Main.Controllers
             {
                 return Results.BadRequest();
             }
-            if(animal.VisitedLocations.Last() == contract.LocationPointId)
+            if(await _animalStorage.IsLastPointEqualsNewPoint(contract.AnimalId, contract.LocationPointId))
             {
                 return Results.BadRequest();
             }

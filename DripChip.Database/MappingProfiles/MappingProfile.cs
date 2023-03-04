@@ -13,20 +13,17 @@ namespace DripChip.Database.MappingProfiles
     {
         public MappingProfile() {
 
-            CreateMap<CreateAccountContract, Account>();
-            CreateMap<UpdateAccountContract, Account>();
             CreateMap<Account, AccountViewModel>();
+            CreateMap<AccountBody, Account>();
 
-            CreateMap<CreateLocationContract, Location>();
-            CreateMap<UpdateLocationContract, Location>();
+            CreateMap<LocationBody, Location>();
             CreateMap<Location, LocationViewModel>();
 
-            CreateMap<CreateAnimalTypeContract, AnimalType>();
-            CreateMap<UpdateAnimalTypeContract, AnimalType>();
+            CreateMap<AnimalTypeBody, AnimalType>();
             CreateMap<AnimalType, AnimalTypeViewModel>();
 
             CreateMap<CreateAnimalContract, Animal>();
-            CreateMap<UpdateAnimalContract, Animal>();
+            CreateMap<AnimalBody, Animal>();
             CreateMap<Animal, AnimalViewModel>();
 
             CreateMap<CreateAnimalVisitedLocationContract, AnimalVisitedLocation>();

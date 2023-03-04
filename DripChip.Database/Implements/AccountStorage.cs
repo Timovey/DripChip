@@ -4,7 +4,6 @@ using DripChip.Database.Interfaces;
 using DripChip.Database.Models;
 using DripChip.DataContracts.DataContracts.Auth;
 using DripChip.DataContracts.ViewModels;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace DripChip.Database.Implements
@@ -22,7 +21,7 @@ namespace DripChip.Database.Implements
             _mapper = mapper;
         }
 
-        public async Task<AccountViewModel> CreateAccountAsync(CreateAccountContract contract)
+        public async Task<AccountViewModel> CreateAccountAsync(AccountBody contract)
         {
 
             var account  = _mapper.Map<Account>(contract);
@@ -35,12 +34,12 @@ namespace DripChip.Database.Implements
         public async Task<AccountViewModel> UpdateAccountAsync(UpdateAccountContract contract)
         {
             var account = await _context.Accounts.Where(el =>
-                el.Id == contract.Id).FirstOrDefaultAsync();
+                el.Id == contract.AccountId).FirstOrDefaultAsync();
             if(account == null )
             {
                 return null;
             }
-            _mapper.Map(contract, account);
+            _mapper.Map(contract.Body, account);
 
             await _context.SaveChangesAsync();
 
@@ -60,14 +59,15 @@ namespace DripChip.Database.Implements
                 .WhereIf(contract.FirstName != null, el => el.FirstName.ToLower().Contains(contract.FirstName.ToLower()))
                 .WhereIf(contract.LastName != null, el => el.LastName.ToLower().Contains(contract.LastName.ToLower()))
                 .WhereIf(contract.Email != null, el => el.Email.ToLower().Contains(contract.Email.ToLower()))
+                .OrderBy(el => el.Id)
                 .Skip(contract.From)
                 .Take(contract.Size)
-                .OrderBy(el => el.Id).ToListAsync();
+                .ToListAsync();
             
             var result = new List<AccountViewModel>();
             foreach (var account in accounts)
             {
-                _mapper.Map<AccountViewModel>(account);
+                result.Add(_mapper.Map<AccountViewModel>(account));
             }
             return result;
         }
@@ -85,11 +85,17 @@ namespace DripChip.Database.Implements
             return true;
         }
 
-        public async Task<bool> IsAccountExist(string email)
+        public async Task<bool> IsAccountExist(string email, int? id)
         {
+            //получаем аккаунт по почте
             var account = await _context.Accounts.Where(el =>
                 el.Email == email).FirstOrDefaultAsync();
 
+            //если проверка еще по Id
+            if(id != null && account != null)
+            {
+                return account.Id != id;
+            }
             return account != null;
         }
 
@@ -99,6 +105,18 @@ namespace DripChip.Database.Implements
                 && el.Password== contract.Password).FirstOrDefaultAsync();
 
             return account == null ? null : _mapper.Map<AccountViewModel>(account);
+        }
+
+        public async Task<bool> IsAnimalLinkToAccount(int accountId)
+        {
+            var animals = await _context.Animals.Where(el => el.ChipperId== accountId)
+                .ToListAsync();
+
+            if(animals != null && animals.Count > 0)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

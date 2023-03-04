@@ -39,5 +39,9 @@ namespace DripChip.Database.Interfaces
 
         public Task<bool> DeleteAnimalVisitedLocationAsync(
            DeleteAnimalVisitedLocationContract contract);
+
+        public Task<bool> IsLastPointEqualsNewPoint(long animalId, long pointId);
+
+        public Task<bool> IsFirstPointEqualsChipPoint(long animalId, long pointId);
     }
 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DripChip.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DripChip.Database.Migrations
 {
     [DbContext(typeof(DripChipContext))]
-    partial class DripChipContextModelSnapshot : ModelSnapshot
+    [Migration("20230304113727_fix_array_fields")]
+    partial class fix_array_fields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

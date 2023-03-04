@@ -1,23 +1,14 @@
 ﻿using DripChip.DataContracts.Attributes;
+using DripChip.DataContracts.DataContracts.Common;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 
 namespace DripChip.DataContracts.DataContracts.Location
 {
-    public class UpdateLocationContract
+    public class UpdateLocationContract : CommonBodyContract<LocationBody>
     {
         [FromRoute]
         [GreaterThanZero]
-        [JsonPropertyName("pointId")]
-        public long Id { get; set; }
-
-        [Required]
-        [FromBody]
-        public double Latitude { get; set; }
-
-        [Required]
-        [FromBody]
-        public double Longitude { get; set; }
+        public long PointId { get; set; }
     }
 }

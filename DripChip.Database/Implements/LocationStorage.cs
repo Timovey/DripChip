@@ -20,24 +20,24 @@ namespace DripChip.Database.Implements
             _mapper = mapper;
         }
 
-        public async Task<LocationViewModel> CreateLocationAsync(CreateLocationContract contract)
+        public async Task<LocationViewModel> CreateLocationAsync(LocationBody contract)
         {
             var location = _mapper.Map<Location>(contract);
             await _context.Locations.AddAsync(location);
             await _context.SaveChangesAsync();
 
-            return _mapper.Map<LocationViewModel>(contract);
+            return _mapper.Map<LocationViewModel>(location);
         }
 
         public async Task<LocationViewModel> UpdateLocationAsync(UpdateLocationContract contract)
         {
             var location = await _context.Locations.Where(el =>
-                el.Id == contract.Id).FirstOrDefaultAsync();
+                el.Id == contract.PointId).FirstOrDefaultAsync();
             if (location == null)
             {
                 return null;
             }
-            _mapper.Map(contract, location);
+            _mapper.Map(contract.Body, location);
 
             await _context.SaveChangesAsync();
 
@@ -64,12 +64,31 @@ namespace DripChip.Database.Implements
             return true;
         }
 
-        public async Task<bool> IsPointExist(double latitude, double longitude)
+        public async Task<bool> IsPointExist(LocationBody contract)
         {
             var location = await _context.Locations.Where(el =>
-              el.Latitude == latitude && el.Longitude == longitude).FirstOrDefaultAsync();
+              el.Latitude == contract.Latitude && el.Longitude == contract.Longitude)
+                .FirstOrDefaultAsync();
 
             return location != null;
+        }
+
+        public async Task<bool> IsAnimalHasPoint(long pointId)
+        {
+            var animals = await _context.Animals.Where(el => 
+                el.ChippingLocationId == pointId)
+                    .ToListAsync();
+            if(animals != null && animals.Count> 0)
+            {
+                return true;
+            }
+            var visitedLocations = await _context.AnimalVisitedLocations.Where(el =>
+                el.LocationPointId == pointId).ToListAsync();
+            if(visitedLocations != null && visitedLocations.Count> 0)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

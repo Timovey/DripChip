@@ -5,7 +5,7 @@ namespace DripChip.Database.Interfaces
 {
     public interface ILocationStorage
     {
-        public Task<LocationViewModel> CreateLocationAsync(CreateLocationContract contract);
+        public Task<LocationViewModel> CreateLocationAsync(LocationBody contract);
 
         public Task<LocationViewModel> UpdateLocationAsync(UpdateLocationContract contract);
 
@@ -13,6 +13,8 @@ namespace DripChip.Database.Interfaces
 
         public Task<bool> DeleteLocationAsync(long pointId);
 
-        public Task<bool> IsPointExist(double latitude, double longitude);
+        public Task<bool> IsPointExist(LocationBody contract);
+
+        public Task<bool> IsAnimalHasPoint(long pointId);
     }
 }

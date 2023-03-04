@@ -1,16 +1,17 @@
 ﻿using DripChip.DataContracts.Attributes;
 using DripChip.DataContracts.Enums;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace DripChip.DataContracts.DataContracts.Animal
 {
-    public class CreateAnimalContract
+    public class AnimalBody
     {
-        // Массив идентификаторов типов животного
-        [Required]
-        public List<long> AnimalTypes { get; set; }
-
         // Масса животного, кг
         [GreaterThanZero]
         public float Weight { get; set; }
@@ -24,16 +25,14 @@ namespace DripChip.DataContracts.DataContracts.Animal
         public float Height { get; set; }
 
         // Гендерный признак животного, доступные значения “MALE”, “FEMALE”, “OTHER”
+        [Required]
         public GenderType Gender { get; set; }
 
         // Жизненный статус животного, доступные значения
         // “ALIVE”(устанавливается автоматически при добавлении нового животного),
         // “DEAD”(можно установить при обновлении информации о животном)
-        public LifeStatusType LifeStatus { get; } = LifeStatusType.ALIVE;
-
-        // Дата и время чипирования в формате ISO-8601
-        // (устанавливается автоматически на момент добавления животного)
-        public DateTime ChippingDateTime { get; } = DateTime.UtcNow;
+        [Required]
+        public LifeStatusType LifeStatus { get; set; }
 
         // Идентификатор аккаунта пользователя
         [GreaterThanZero]
@@ -42,7 +41,5 @@ namespace DripChip.DataContracts.DataContracts.Animal
         // Идентификатор точки локации животных
         [GreaterThanZero]
         public long ChippingLocationId { get; set; }
-
-        public List<long> VisitedLocations { get; } = new List<long>();
     }
 }

@@ -5,7 +5,7 @@ namespace DripChip.Database.Interfaces
 {
     public interface IAnimalTypeStorage
     {
-        public Task<AnimalTypeViewModel> CreateAnimalTypeAsync(CreateAnimalTypeContract contract);
+        public Task<AnimalTypeViewModel> CreateAnimalTypeAsync(AnimalTypeBody contract);
 
         public Task<AnimalTypeViewModel> UpdateAnimalTypeAsync(UpdateAnimalTypeContract contract);
 
@@ -14,5 +14,7 @@ namespace DripChip.Database.Interfaces
         public Task<bool> DeleteAnimalTypeAsync(long animalTypeId);
 
         public Task<bool> IsAnimalTypeExist(string type);
+
+        public Task<bool> IsAnimalHasType(long typeId);
     }
 }

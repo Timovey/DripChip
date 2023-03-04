@@ -12,7 +12,7 @@ namespace DripChip.DataContracts.DataContracts.AnimalVisitedLocation
         public long Id { get; set; }
 
         [FromBody]
-        public DateTime DateTimeOfVisitLocationPoint { get; } = DateTime.Now;
+        public DateTime DateTimeOfVisitLocationPoint { get; } = DateTime.UtcNow;
 
         [FromBody]
         [GreaterThanZero]

@@ -1,20 +1,15 @@
 ﻿using DripChip.DataContracts.Attributes;
+using DripChip.DataContracts.DataContracts.Common;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace DripChip.DataContracts.DataContracts.AnimalType
 {
-    public class UpdateAnimalTypeContract
+    public class UpdateAnimalTypeContract : CommonBodyContract<AnimalTypeBody>
     {
         [FromRoute]
-        [Required]
         [GreaterThanZero]
-        [JsonPropertyName("typeId")]
-        public long Id { get; set; }
-
-        [FromBody]
-        [Required]
-        public string Type { get; set; }
+        public long TypeId { get; set; }
     }
 }

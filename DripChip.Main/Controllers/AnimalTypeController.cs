@@ -1,4 +1,6 @@
 ﻿using DripChip.Database.Interfaces;
+using DripChip.Database.Models;
+using DripChip.DataContracts.DataContracts.Animal;
 using DripChip.DataContracts.DataContracts.AnimalType;
 using DripChip.Main.Attributes;
 using Microsoft.AspNetCore.Authorization;
@@ -11,10 +13,10 @@ namespace DripChip.Main.Controllers
     [Authorize]
     public class AnimalTypeController : ControllerBase
     {
-        private IAnimalTypeStorage _storage;
+        private IAnimalTypeStorage _animalTypeStarage;
         public AnimalTypeController(IAnimalTypeStorage storage)
         {
-            _storage = storage;
+            _animalTypeStarage = storage;
         }
 
         [HttpGet("{typeId}")]
@@ -27,7 +29,7 @@ namespace DripChip.Main.Controllers
             }
             try
             {
-                var result = await _storage.GetAnimalTypeAsync(typeId);
+                var result = await _animalTypeStarage.GetAnimalTypeAsync(typeId);
                 if (result == null)
                 {
                     return Results.NotFound();
@@ -41,16 +43,15 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpPost]
-        public async Task<IResult> CreateAnimalTypeAsync(CreateAnimalTypeContract contract)
+        public async Task<IResult> CreateAnimalTypeAsync([FromBody] AnimalTypeBody contract)
         {
-            //ПРОВЕРКА НА ПРОБЕЛЫ
-            if (await _storage.IsAnimalTypeExist(contract.Type))
+            if (await _animalTypeStarage.IsAnimalTypeExist(contract.Type))
             {
                 return Results.Conflict();
             }
             try
             {
-                var result = await _storage.CreateAnimalTypeAsync(contract);
+                var result = await _animalTypeStarage.CreateAnimalTypeAsync(contract);
                 return Results.Created(HttpContext.Request.Path, result);
             }
             catch (Exception ex)
@@ -61,10 +62,14 @@ namespace DripChip.Main.Controllers
 
         [HttpPut("{typeId}")]
         public async Task<IResult> UpdateAnimalTypeAsync(UpdateAnimalTypeContract contract)
-        {                       
+        {         
+            if(await _animalTypeStarage.IsAnimalTypeExist(contract.Body.Type))
+            {
+                return Results.Conflict();
+            }
             try
             {
-                var result = await _storage.UpdateAnimalTypeAsync(contract);
+                var result = await _animalTypeStarage.UpdateAnimalTypeAsync(contract);
                 if (result == null)
                 {
                     return Results.NotFound();
@@ -85,10 +90,14 @@ namespace DripChip.Main.Controllers
             {
                 return Results.BadRequest();
             }
+            if(await _animalTypeStarage.IsAnimalHasType(typeId))
+            {
+                return Results.BadRequest();
+            }
             try
             {
-                var result = await _storage.DeleteAnimalTypeAsync(typeId);
-                if (result == null)
+                var result = await _animalTypeStarage.DeleteAnimalTypeAsync(typeId);
+                if (result == null || !result)
                 {
                     return Results.NotFound();
                 }
