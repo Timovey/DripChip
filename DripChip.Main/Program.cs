@@ -19,13 +19,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<ApiBehaviorOptions>(options => 
     options.SuppressInferBindingSourcesForParameters = true);
 
-//culture for dates
-//builder.Services.Configure<RequestLocalizationOptions>(options =>
-//{
-//    options.DefaultRequestCulture = new RequestCulture(CultureInfo.InvariantCulture);
-//    options.SupportedCultures = new List<CultureInfo> { CultureInfo.InvariantCulture };
-//});
-
 builder.Services.AddDbContext<DripChipContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"))
@@ -70,7 +63,6 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
     options.JsonSerializerOptions.Converters.Add(new DateTimeJsonConverter());
-    options.JsonSerializerOptions.Converters.Add(new NullDateTimeJsonConverter());
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
 });
 

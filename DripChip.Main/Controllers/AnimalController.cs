@@ -46,7 +46,6 @@ namespace DripChip.Main.Controllers
         [NotStrict]
         public async Task<IResult> GetFilteredAccountAsync([FromQuery] GetFilteredAnimalContract? contract)
         {
-            //ФОРМАТ ДАТЫ
             try
             {
                 var result = await _animalStorage.GetFilteredAnimalAsync(contract);
@@ -119,7 +118,6 @@ namespace DripChip.Main.Controllers
             }
         }
 
-        //Новая точка чипирования совпадает с первой посещенной точкой локации
         [HttpPut("{animalId}")]
         public async Task<IResult> UpdateAnimalAsync(UpdateAnimalContract contract)
         {
@@ -160,9 +158,6 @@ namespace DripChip.Main.Controllers
                 return Results.StatusCode(500);
             }
         }
-
-        //Животное покинуло локацию чипирования, при этом
-        //есть другие посещенные точки
 
         [HttpDelete("{animalId}")]
         public async Task<IResult> DeleteAnimalAsync([FromRoute] int animalId)
@@ -334,7 +329,8 @@ namespace DripChip.Main.Controllers
             {
                 return Results.NotFound();
             }
-            if(animal.ChippingLocationId == contract.LocationPointId)
+            if(animal.VisitedLocations.Count == 0 
+                && animal.ChippingLocationId == contract.LocationPointId)
             {
                 return Results.BadRequest();
             }
@@ -430,7 +426,7 @@ namespace DripChip.Main.Controllers
         }
 
         [HttpDelete("{animalId}/locations/{visitedPointId}")]
-        public async Task<IResult> DeleteAnimalVisitedLocationAsync(DeleteAnimalVisitedLocationContract contract)
+        public async Task<IResult> DeleteAnimalVisitedLocationAsync([FromRoute] DeleteAnimalVisitedLocationContract contract)
         {
             var animal = await _animalStorage.GetAnimalAsync(contract.AnimalId);
             if (animal == null)

@@ -83,7 +83,6 @@ namespace DripChip.Main.Controllers
         [HttpDelete("{typeId}")]
         public async Task<IResult> DeleteAnimalTypeAsync([FromRoute] long typeId)
         {
-            //ТОЧКА СВЯЗАНА С ЖИВОТНЫМ - проверка
             if (typeId == null || typeId <= 0)
             {
                 return Results.BadRequest();

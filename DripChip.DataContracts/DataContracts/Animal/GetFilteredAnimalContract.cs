@@ -11,7 +11,6 @@ namespace DripChip.DataContracts.DataContracts.Animal
 
         public DateTime? EndDateTime { get; set; }
 
-        [FromQuery]
         [GreaterThanZeroOrNull]
         public int? ChipperId { get; set; }
 

@@ -144,6 +144,5 @@ namespace DripChip.Main.Controllers
                 return Results.StatusCode(500);
             }
         }
-
     }
 }

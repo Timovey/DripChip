@@ -217,7 +217,7 @@ namespace DripChip.Database.Implements
             CreateAnimalVisitedLocationContract contract)
         {
             var animalVisitedLocation = _mapper.Map<AnimalVisitedLocation>(contract);
-                await _context.AnimalVisitedLocations.AddAsync(animalVisitedLocation);
+            await _context.AnimalVisitedLocations.AddAsync(animalVisitedLocation);
 
             await _context.SaveChangesAsync();
 
@@ -237,7 +237,7 @@ namespace DripChip.Database.Implements
             UpdateAnimalVisitedLocationContract contract)
         {
             var animalVisitedLocation = await _context.AnimalVisitedLocations
-                .Where(el => el.Id == contract.Body.LocationPointId).FirstOrDefaultAsync();
+                .Where(el => el.Id == contract.Body.VisitedLocationPointId).FirstOrDefaultAsync();
 
 
             if(animalVisitedLocation == null)
@@ -279,6 +279,19 @@ namespace DripChip.Database.Implements
                 return false;
             }
             _context.AnimalVisitedLocations.Remove(animalVisitedLocation);
+
+            var firstVisitedLocationId = animal.VisitedLocations.FirstOrDefault();
+            if (firstVisitedLocationId != null)
+            {
+                var firstVisitedLocation = await _context.AnimalVisitedLocations.Where(el =>
+                    el.Id == firstVisitedLocationId).FirstOrDefaultAsync();
+                if(firstVisitedLocation != null && firstVisitedLocation.LocationPointId == animal.ChippingLocationId)
+                {
+                    animal.VisitedLocations.Remove(firstVisitedLocationId);
+                    _context.AnimalVisitedLocations.Remove(firstVisitedLocation);
+                    await _context.SaveChangesAsync();
+                } 
+            }
             return true;
         }
 
