@@ -1,5 +1,4 @@
 ﻿using DripChip.DataContracts.Attributes;
-using Microsoft.AspNetCore.Mvc;
 
 namespace DripChip.DataContracts.DataContracts.Animal
 {

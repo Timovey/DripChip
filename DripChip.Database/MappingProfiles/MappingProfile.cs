@@ -27,7 +27,7 @@ namespace DripChip.Database.MappingProfiles
             CreateMap<Animal, AnimalViewModel>();
 
             CreateMap<CreateAnimalVisitedLocationContract, AnimalVisitedLocation>();
-            CreateMap<UpdateAnimalVisitedLocationContract, AnimalVisitedLocation>();
+            CreateMap<AnimalVisitedLocationBody, AnimalVisitedLocation>();
             CreateMap<AnimalVisitedLocation, AnimalVisitedLocationViewModel>();
         }
     }

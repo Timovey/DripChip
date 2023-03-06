@@ -1,6 +1,5 @@
 ﻿using DripChip.DataContracts.Enums;
 using DripChip.DataContracts.JsonHelpers;
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace DripChip.DataContracts.ViewModels

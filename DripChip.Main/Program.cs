@@ -11,9 +11,6 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.Extensions.DependencyInjection;
-using System.Text.RegularExpressions;
-using System.ComponentModel;
 using DripChip.DataContracts.JsonHelpers;
 
 var builder = WebApplication.CreateBuilder(args);

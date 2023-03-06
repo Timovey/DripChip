@@ -187,6 +187,9 @@ namespace DripChip.Database.Implements
 
             var animalVisitedLocation = await _context.AnimalVisitedLocations
                 .Where(el => animal.VisitedLocations.Contains(el.Id))
+                .OrderBy(el => el.Id)
+                .Skip(contract.From)
+                .Take(contract.Size)
                 .ToListAsync();
 
             var result = new List<AnimalVisitedLocationViewModel>();
@@ -234,12 +237,15 @@ namespace DripChip.Database.Implements
             UpdateAnimalVisitedLocationContract contract)
         {
             var animalVisitedLocation = await _context.AnimalVisitedLocations
-                .Where(el => el.Id == contract.LocationPointId).FirstOrDefaultAsync();
+                .Where(el => el.Id == contract.Body.LocationPointId).FirstOrDefaultAsync();
+
 
             if(animalVisitedLocation == null)
             {
                 return null;
             }
+            _mapper.Map(contract.Body, animalVisitedLocation);
+
 
             await _context.SaveChangesAsync();
 

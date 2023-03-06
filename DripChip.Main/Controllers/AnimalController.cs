@@ -301,7 +301,6 @@ namespace DripChip.Main.Controllers
         public async Task<IResult> GetFilteredAmimalVisitedLocationAsync(
            GetFilteredAnimalVisitedLocationContract contract)
         {
-            //ФОРМАТ ДАТЫ
             try
             {
                 var result = await _animalStorage.GetFilteredAmimalVisitedLocationAsync(contract);
@@ -367,48 +366,48 @@ namespace DripChip.Main.Controllers
             {
                 return Results.NotFound();
             }
-            if (await _locationStorage.GetLocationAsync(contract.LocationPointId) == null)
+            if (await _locationStorage.GetLocationAsync(contract.Body.LocationPointId) == null)
             {
                 return Results.NotFound();
             }
-            var animalVisitedLocation = await _animalStorage.GetAnimalVisitedLocationAsync(contract.Id);
+            var animalVisitedLocation = await _animalStorage.GetAnimalVisitedLocationAsync(contract.Body.VisitedLocationPointId);
             if (animalVisitedLocation == null) 
             {
                 return Results.NotFound();
             }
-            if(!animal.VisitedLocations.Contains(contract.Id)) 
+            if(!animal.VisitedLocations.Contains(contract.Body.VisitedLocationPointId)) 
             { 
                 return Results.NotFound();
             }
 
 
-            if (animal.ChippingLocationId == contract.LocationPointId)
+            if (animal.ChippingLocationId == contract.Body.LocationPointId)
             {
                 return Results.BadRequest();
             }
-            if (animal.VisitedLocations.FirstOrDefault() == contract.Id && 
-                contract.LocationPointId == animal.ChippingLocationId)
+            if (animal.VisitedLocations.FirstOrDefault() == contract.Body.VisitedLocationPointId && 
+                contract.Body.LocationPointId == animal.ChippingLocationId)
             {
                 return Results.BadRequest();
             }
-            if(animalVisitedLocation.LocationPointId == contract.LocationPointId)
+            if(animalVisitedLocation.LocationPointId == contract.Body.LocationPointId)
             {
                 return Results.BadRequest();
             }
             for(int i = 0; i < animal.VisitedLocations.Count(); i++)
             {
-                if (animal.VisitedLocations[i] == contract.Id)
+                if (animal.VisitedLocations[i] == contract.Body.VisitedLocationPointId)
                 {
                     if(i - 1 >= 0 && (await _animalStorage
                         .GetAnimalVisitedLocationAsync(animal.VisitedLocations[i - 1])).LocationPointId 
-                        == contract.LocationPointId)
+                        == contract.Body.LocationPointId)
                     {
                         return Results.BadRequest();
                     }
 
                     if (i + 1 < animal.VisitedLocations.Count() && (await _animalStorage
                         .GetAnimalVisitedLocationAsync(animal.VisitedLocations[i + 1])).LocationPointId
-                        == contract.LocationPointId)
+                        == contract.Body.LocationPointId)
                     {
                         return Results.BadRequest();
                     }

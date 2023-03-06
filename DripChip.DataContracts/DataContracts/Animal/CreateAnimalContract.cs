@@ -1,6 +1,5 @@
 ﻿using DripChip.DataContracts.Attributes;
 using DripChip.DataContracts.Enums;
-using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
 namespace DripChip.DataContracts.DataContracts.Animal

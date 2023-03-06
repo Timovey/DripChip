@@ -1,6 +1,4 @@
 ﻿using DripChip.Database.Interfaces;
-using DripChip.Database.Models;
-using DripChip.DataContracts.DataContracts.Animal;
 using DripChip.DataContracts.DataContracts.Location;
 using DripChip.Main.Attributes;
 using Microsoft.AspNetCore.Authorization;

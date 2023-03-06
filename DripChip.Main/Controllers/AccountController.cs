@@ -1,10 +1,8 @@
 ﻿using DripChip.Database.Interfaces;
-using DripChip.DataContracts.DataContracts.Animal;
 using DripChip.DataContracts.DataContracts.Auth;
 using DripChip.Main.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics.Contracts;
 using System.Security.Claims;
 
 namespace DripChip.Main.Controllers
